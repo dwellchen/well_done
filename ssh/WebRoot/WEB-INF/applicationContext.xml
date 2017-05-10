@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="
+            http://www.springframework.org/schema/beans
+            http://www.springframework.org/schema/beans/spring-beans.xsd
+            http://www.springframework.org/schema/context
+            http://www.springframework.org/schema/context/spring-context.xsd
+            http://www.springframework.org/schema/aop
+            http://www.springframework.org/schema/aop/spring-aop.xsd
+            http://www.springframework.org/schema/tx
+            http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+	<!-- 使用 annotation -->
+	<context:annotation-config />
+   	<!-- 使用 annotation 自动注册bean,并检查@Controller, @Service, @Repository注解已被注入 --> 
+	<context:component-scan base-package="com.ssh" />
+
+	<!-- 读取jdbc.properties配置文件 -->
+	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations">
+			<value>WEB-INF/jdbc.properties</value>
+		</property>
+	</bean> 
+	
+	<!-- 数据库配置 -->
+	<bean id="dataSource"
+		class="org.apache.commons.dbcp.BasicDataSource">
+		<!-- <property name="driverClassName"
+			value="com.mysql.jdbc.Driver">
+		</property>
+		<property name="url"
+			value="jdbc:mysql://192.168.204.132:3306/purchasedbTest">
+		</property>
+		<property name="username" value="root"></property>
+		<property name="password" value="kingdeeeasscmdb"></property> -->
+		
+		<property name="driverClassName" 	value="${jdbc.driverClassName}" />
+		<property name="url" 			 	value="${jdbc.url}" />
+		<property name="username" 			value="${jdbc.username}" />
+		<property name="password" 			value="${jdbc.password}" />
+		 <!--maxActive: 最大连接数量-->    
+        <property name="maxActive" value="100"/>  
+        <!--minIdle: 最小空闲连接-->    
+        <property name="minIdle" value="1"/>  
+        <!--maxIdle: 最大空闲连接-->    
+        <property name="maxIdle" value="10"/>  
+        <!--initialSize: 初始化连接-->    
+        <property name="initialSize" value="1"/>  
+        <!-- 连接被泄露时是否打印 -->  
+        <property name="logAbandoned" value="true"/>  
+        <!--removeAbandoned: 是否自动回收超时连接-->    
+        <property name="removeAbandoned"  value="true"/>  
+        <!--removeAbandonedTimeout: 超时时间(以秒数为单位)-->    
+        <property name="removeAbandonedTimeout" value="500"/>  
+        <!--maxWait: 超时等待时间以毫秒为单位 1000等于60秒-->  
+        <property name="maxWait" value="1000"/>  
+        <!-- 在空闲连接回收器线程运行期间休眠的时间值,以毫秒为单位. -->  
+        <property name="timeBetweenEvictionRunsMillis" value="10000"/>
+        <!-- 在空闲时测试连接  -->
+        <property name="testWhileIdle" value="true"/>  
+        <!--  在每次空闲连接回收器线程(如果有)运行时检查的连接数量 -->  
+        <property name="numTestsPerEvictionRun" value="10"/>  
+        <!-- 1000 * 60 * 30  连接在池中保持空闲而不被空闲连接回收器线程-->  
+        <property name="minEvictableIdleTimeMillis" value="10000"/>  
+        <property name="validationQuery" value="SELECT 1 FROM DUAL"/>  
+	</bean>
+
+	<!-- sessionFactory -->
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+		<property name="dataSource">
+			<ref bean="dataSource" />
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">
+					org.hibernate.dialect.MySQLDialect
+				</prop>
+				<prop key="hibernate.show_sql">true</prop>
+				<!-- 可以自动创建数据库表(create),不创建(none) -->
+				<prop key="hibernate.hbm2ddl.auto">update</prop>
+			</props>
+		</property>
+		<!-- 包扫描的方式加载注解类(推荐) -->
+		<property name="packagesToScan">
+			<list>
+				<value>com.ssh.*</value>
+			</list>
+		</property>
+	</bean>
+
+	<!--JDBC事务管理器,根据你的情况使用不同的事务管理器,如果工程中有Hibernate,就用Hibernate的事务管理器 -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource">
+			<ref bean="dataSource" />
+		</property>
+	</bean>
+
+	<!-- 用注解来实现事务管理 -->
+	<tx:annotation-driven transaction-manager="transactionManager" />
+	
+	<!-- 强制使用CGLIB实现AOP -->
+	<aop:aspectj-autoproxy proxy-target-class="true"/>
+	<!-- 自使用JDK代理或CGLIB -->
+	<!-- <aop:aspectj-autoproxy/> -->
+	
+</beans>
